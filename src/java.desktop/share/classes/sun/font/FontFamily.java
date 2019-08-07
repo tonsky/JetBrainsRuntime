@@ -118,7 +118,6 @@ public class FontFamily {
             return false;
         }
 
-        ensureFontsLoaded();
         FileFont existingFont = null;
         if (plain instanceof FileFont) {
             existingFont = (FileFont)plain;
@@ -250,19 +249,6 @@ public class FontFamily {
             }
             FontUtilities.getLogger().info(msg);
         }
-        /* Allow a lower-rank font only if its a file font
-         * from the exact same source as any previous font.
-         */
-        if ((font.getRank() > familyRank) && !isFromSameSource(font)) {
-            if (FontUtilities.isLogging()) {
-                FontUtilities.getLogger()
-                                  .warning("Rejecting adding " + font +
-                                           " of lower rank " + font.getRank() +
-                                           " to family " + this +
-                                           " of rank " + familyRank);
-            }
-            return;
-        }
         synchronized (fontSequence) {
             if (initialized) {
                 doSetFont(font, style);
@@ -295,6 +281,20 @@ public class FontFamily {
     }
 
     private void doSetFont(Font2D font, int style) {
+        /* Allow a lower-rank font only if its a file font
+         * from the exact same source as any previous font.
+         */
+        if ((font.getRank() > familyRank) && !isFromSameSource(font)) {
+            if (FontUtilities.isLogging()) {
+                FontUtilities.getLogger()
+                  .warning("Rejecting adding " + font +
+                           " of lower rank " + font.getRank() +
+                           " to family " + this +
+                           " of rank " + familyRank);
+            }
+            return;
+        }
+
         switch (style) {
 
         case Font.PLAIN:
