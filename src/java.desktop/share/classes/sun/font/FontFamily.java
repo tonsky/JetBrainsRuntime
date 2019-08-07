@@ -46,7 +46,7 @@ public class FontFamily {
     protected Font2D bold;
     protected Font2D italic;
     protected Font2D bolditalic;
-    private List<FontAndStyle> fontSequence;
+    private List<FontAndStyle> fontSequence = new ArrayList<FontAndStyle>();
     private boolean initialized = false;
     protected boolean logicalFont = false;
     protected int familyRank;
@@ -262,33 +262,35 @@ public class FontFamily {
             }
             return;
         }
-        if (initialized) {
-            doSetFont(font, style);
-            return;
+        synchronized (fontSequence) {
+            if (initialized) {
+                doSetFont(font, style);
+                return;
+            }
+            fontSequence.add(new FontAndStyle(font, style));
         }
-        if (fontSequence == null) {
-            fontSequence = new ArrayList<FontAndStyle>();
-        }
-        fontSequence.add(new FontAndStyle(font, style));
     }
 
     private void ensureFontsLoaded() {
-        if (fontSequence != null) {
+        synchronized (fontSequence) {
+            if (initialized) {
+                return;
+            }
             for (FontAndStyle fontAndStyle : fontSequence) {
                 doSetFont(fontAndStyle.font, fontAndStyle.style);
             }
-        }
-        if (italic == null && plain instanceof FontWithDerivedItalic) {
-            italic = ((FontWithDerivedItalic)plain).createItalic();
-        }
-        if (bolditalic == null) {
-            Font2D boldItalicPrototype = bold != null ? bold : plain;
-            if (boldItalicPrototype instanceof FontWithDerivedItalic) {
-                bolditalic = ((FontWithDerivedItalic)boldItalicPrototype).createItalic();
+            if (italic == null && plain instanceof FontWithDerivedItalic) {
+                italic = ((FontWithDerivedItalic)plain).createItalic();
             }
+            if (bolditalic == null) {
+                Font2D boldItalicPrototype = bold != null ? bold : plain;
+                if (boldItalicPrototype instanceof FontWithDerivedItalic) {
+                    bolditalic = ((FontWithDerivedItalic)boldItalicPrototype).createItalic();
+                }
+            }
+            fontSequence.clear();
+            initialized = true;
         }
-        fontSequence = null;
-        initialized = true;
     }
 
     private void doSetFont(Font2D font, int style) {
