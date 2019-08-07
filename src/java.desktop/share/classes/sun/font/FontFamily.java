@@ -46,7 +46,7 @@ public class FontFamily {
     protected Font2D bold;
     protected Font2D italic;
     protected Font2D bolditalic;
-    private List<FontAndStyle> fontSequence = new ArrayList<FontAndStyle>();
+    private final List<FontAndStyle> fontSequence = new ArrayList<FontAndStyle>();
     private boolean initialized = false;
     protected boolean logicalFont = false;
     protected int familyRank;
