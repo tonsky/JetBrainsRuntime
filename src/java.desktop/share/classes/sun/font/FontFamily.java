@@ -118,6 +118,7 @@ public class FontFamily {
             return false;
         }
 
+        ensureFontsLoaded();
         FileFont existingFont = null;
         if (plain instanceof FileFont) {
             existingFont = (FileFont)plain;
