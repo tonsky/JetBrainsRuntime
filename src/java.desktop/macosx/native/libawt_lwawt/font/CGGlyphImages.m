@@ -648,7 +648,7 @@ CGGI_CreateImageForGlyph
     CGFloat x = -info->topLeftX;
     CGFloat y = canvas->image->height + info->topLeftY;
 
-    if (glyphDescriptor == &argb) {
+//    if (glyphDescriptor == &argb) {
         CGAffineTransform matrix = CGContextGetTextMatrix(canvas->context);
         CGFloat fontSize = sqrt(fabs(matrix.a * matrix.d - matrix.b * matrix.c));
         CTFontRef font = CTFontCreateWithGraphicsFont(cgFont, fontSize, NULL, NULL);
@@ -677,10 +677,10 @@ CGGI_CreateImageForGlyph
         // restore context's original state
         CGContextSetTextMatrix(canvas->context, matrix);
         CGContextSetFontSize(canvas->context, 1);
-    } else {
-        // old procedure is faster, so we use it by default
-        CGContextShowGlyphsAtPoint(canvas->context, x, y, &glyph, 1);
-    }
+//    } else {
+//        // old procedure is faster, so we use it by default
+//        CGContextShowGlyphsAtPoint(canvas->context, x, y, &glyph, 1);
+//    }
 
     // copy the glyph from the canvas into the info
     (*glyphDescriptor->copyFxnPtr)(canvas, info);
