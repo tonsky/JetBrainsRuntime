@@ -75,6 +75,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -97,7 +98,11 @@ public final class GlyphLayout {
     private FontStrikeDesc _sd;
     private float[] _mat;
     private float ptSize;
-    private int _typo_flags;
+    private int _direction;
+    private static final int DIRECTION_LTR = 4;
+    private static final int DIRECTION_RTL = 5;
+    private ArrayList<FontFeature> _features;
+    private ArrayList<FontVariation> _variations;
     private int _offset;
 
     public static final class LayoutEngineKey {
@@ -174,7 +179,7 @@ public final class GlyphLayout {
          * leave pt and the gvdata unchanged.
          */
         public void layout(FontStrikeDesc sd, float[] mat, float ptSize, int gmask,
-                           int baseIndex, TextRecord text, int typo_flags, Point2D.Float pt, GVData data);
+                           int baseIndex, TextRecord text, int direction, ByteBuffer features, ByteBuffer variations, Point2D.Float pt, GVData data);
     }
 
     /**
@@ -375,8 +380,10 @@ public final class GlyphLayout {
         // go through the back door for this
         if (font.hasLayoutAttributes()) {
             AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
-            if (values.getKerning() != 0) _typo_flags |= 0x1;
-            if (values.getLigatures() != 0) _typo_flags |= 0x2;
+            if (values.getKerning() != 0)
+                _features.add(FontFeature.fromString("kern"));
+            if (values.getLigatures() != 0)
+                _features.add(FontFeature.fromString("liga"));
         }
 
         _offset = offset;
@@ -397,7 +404,7 @@ public final class GlyphLayout {
         int max = text.length;
         if (flags != 0) {
             if ((flags & Font.LAYOUT_RIGHT_TO_LEFT) != 0) {
-              _typo_flags |= 0x80000000; // RTL
+                _direction = DIRECTION_RTL;
             }
 
             if ((flags & Font.LAYOUT_NO_START_CONTEXT) != 0) {
@@ -455,7 +462,7 @@ public final class GlyphLayout {
         int stop = _ercount;
         int dir = 1;
 
-        if (_typo_flags < 0) { // RTL
+        if (_direction == DIRECTION_RTL) {
             ix = stop - 1;
             stop = -1;
             dir = -1;
@@ -519,7 +526,9 @@ public final class GlyphLayout {
     }
 
     private void init(int capacity) {
-        this._typo_flags = 0;
+        this._direction = DIRECTION_LTR;
+        this._features = new ArrayList<>();
+        this._variations = new ArrayList<>();
         this._ercount = 0;
         this._gvdata.init(capacity);
     }
@@ -659,7 +668,6 @@ public final class GlyphLayout {
             this.limit = limit;
             this.gmask = gmask;
             this.key.init(font, script, lang);
-            this.eflags = 0;
 
             // only request canonical substitution if we have combining marks
             for (int i = start; i < limit; ++i) {
@@ -674,8 +682,6 @@ public final class GlyphLayout {
                 if (gc == NON_SPACING_MARK ||
                     gc == ENCLOSING_MARK ||
                     gc == COMBINING_SPACING_MARK) { // could do range test also
-
-                    this.eflags = 0x4;
                     break;
                 }
             }
@@ -687,7 +693,10 @@ public final class GlyphLayout {
             _textRecord.start = start;
             _textRecord.limit = limit;
             engine.layout(_sd, _mat, ptSize, gmask, start - _offset, _textRecord,
-                          _typo_flags | eflags, _pt, _gvdata);
+                          _direction,
+                          FontFeature.toDirectByteBuffer(_features),
+                          FontVariation.toDirectByteBuffer(_variations),
+                          _pt, _gvdata);
         }
     }
 }

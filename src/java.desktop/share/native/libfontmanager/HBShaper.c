@@ -228,10 +228,6 @@ JDKFontInfo*
 }
 
 
-#define TYPO_KERN 0x00000001
-#define TYPO_LIGA 0x00000002
-#define TYPO_RTL  0x80000000
-
 JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
     (JNIEnv *env, jclass cls,
      jobject font2D,
@@ -248,7 +244,9 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
      jint limit,
      jint baseIndex,
      jobject startPt,
-     jint flags,
+     jint direction, 
+     jobject bb_features,
+     jobject bb_variations,
      jint slot) {
 
      hb_buffer_t *buffer;
@@ -259,11 +257,8 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
      int glyphCount;
      hb_glyph_info_t *glyphInfo;
      hb_glyph_position_t *glyphPos;
-     hb_direction_t direction = HB_DIRECTION_LTR;
-     hb_feature_t *features = NULL;
-     int featureCount = 0;
-     char* kern = (flags & TYPO_KERN) ? "kern" : "-kern";
-     char* liga = (flags & TYPO_LIGA) ? "liga" : "-liga";
+     int feature_count = (*env)->GetDirectBufferCapacity(env, bb_features) / sizeof(hb_feature_t);
+     hb_feature_t *features = (hb_feature_t *) (*env)->GetDirectBufferAddress(env, bb_features);
      jboolean ret;
      unsigned int buflen;
 
@@ -284,9 +279,6 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
      hb_buffer_set_script(buffer, getHBScriptCode(script));
      hb_buffer_set_language(buffer,
                             hb_ot_tag_to_language(HB_OT_TAG_DEFAULT_LANGUAGE));
-     if ((flags & TYPO_RTL) != 0) {
-         direction = HB_DIRECTION_RTL;
-     }
      hb_buffer_set_direction(buffer, direction);
      hb_buffer_set_cluster_level(buffer,
                                  HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
@@ -302,13 +294,7 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
 
      hb_buffer_add_utf16(buffer, chars, len, offset, limit-offset);
 
-     features = calloc(2, sizeof(hb_feature_t));
-     if (features) {
-         hb_feature_from_string(kern, -1, &features[featureCount++]);
-         hb_feature_from_string(liga, -1, &features[featureCount++]);
-     }
-
-     hb_shape_full(hbfont, buffer, features, featureCount, 0);
+     hb_shape_full(hbfont, buffer, features, feature_count, 0);
      glyphCount = hb_buffer_get_length(buffer);
      glyphInfo = hb_buffer_get_glyph_infos(buffer, 0);
      glyphPos = hb_buffer_get_glyph_positions(buffer, &buflen);

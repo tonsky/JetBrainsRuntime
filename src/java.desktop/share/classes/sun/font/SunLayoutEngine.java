@@ -36,6 +36,7 @@ import sun.java2d.DisposerRecord;
 
 import java.awt.geom.Point2D;
 import java.lang.ref.SoftReference;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.WeakHashMap;
 
@@ -168,7 +169,8 @@ public final class SunLayoutEngine implements LayoutEngine, LayoutEngineFactory 
     }
 
     public void layout(FontStrikeDesc desc, float[] mat, float ptSize, int gmask,
-                       int baseIndex, TextRecord tr, int typo_flags,
+                       int baseIndex, TextRecord tr, int direction, 
+                       ByteBuffer features, ByteBuffer variations,
                        Point2D.Float pt, GVData data) {
         Font2D font = key.font();
         FontStrike strike = font.getStrike(desc);
@@ -179,7 +181,7 @@ public final class SunLayoutEngine implements LayoutEngine, LayoutEngineFactory 
                     pFace, isAAT(font),
                     tr.text, data, key.script(),
                     tr.start, tr.limit, baseIndex, pt,
-                    typo_flags, gmask);
+                    direction, features, variations, gmask);
         }
     }
 
@@ -189,7 +191,8 @@ public final class SunLayoutEngine implements LayoutEngine, LayoutEngineFactory 
               long pNativeFont, long pFace, boolean aat,
               char[] chars, GVData data,
               int script, int offset, int limit,
-              int baseIndex, Point2D.Float pt, int typo_flags, int slot);
+              int baseIndex, Point2D.Float pt, int direction, 
+              ByteBuffer features, ByteBuffer variations, int slot);
 
     private static native long createFace(Font2D font,
                                           boolean aat,

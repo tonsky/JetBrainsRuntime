@@ -495,4 +495,9 @@ public final class FontUtilities {
         }
     }
 
+    public static int hbTagFromString(String s) {
+        if (s.length() != 4)
+            throw new IllegalArgumentException("Expected 4-char string: " + s);
+        return (s.charAt(0) & 0xFF) << 24 | (s.charAt(1) & 0xFF) << 16 | (s.charAt(2) & 0xFF) << 8 | (s.charAt(3) & 0xFF);
+    }
 }
