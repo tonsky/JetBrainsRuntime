@@ -21,10 +21,10 @@ public final class FontFeature {
         ByteBuffer bb = ByteBuffer.allocateDirect(features.size() * 16);
         bb.order(ByteOrder.nativeOrder());
         for (FontFeature f: features) {
-            bb.putInt(f.tag);       // hb_tag_t      tag;
-            bb.putInt(f.value);     // uint32_t      value;
-            bb.putLong(0xFFFFFFFF); // unsigned int  start;
-                                    // unsigned int  end;
+            bb.putInt(f.tag);   // hb_tag_t      tag;
+            bb.putInt(f.value); // uint32_t      value;
+            bb.putInt(0);       // unsigned int  start;
+            bb.putInt(-1);      // unsigned int  end;
         }
         return bb;
     }

@@ -384,6 +384,9 @@ public final class GlyphLayout {
                 _features.add(FontFeature.fromString("kern"));
             if (values.getLigatures() != 0)
                 _features.add(FontFeature.fromString("liga"));
+            _features.add(FontFeature.fromString("zero"));
+            _features.add(FontFeature.fromString("onum"));
+            _features.add(FontFeature.fromString("ss01"));
         }
 
         _offset = offset;

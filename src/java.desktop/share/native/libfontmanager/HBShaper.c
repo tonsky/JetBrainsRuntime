@@ -257,8 +257,15 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
      int glyphCount;
      hb_glyph_info_t *glyphInfo;
      hb_glyph_position_t *glyphPos;
+
      int feature_count = (*env)->GetDirectBufferCapacity(env, bb_features) / sizeof(hb_feature_t);
      hb_feature_t *features = (hb_feature_t *) (*env)->GetDirectBufferAddress(env, bb_features);
+
+     // printf("direction: %d (%d %d), sizeof: %lu, feature_count: %d\n", direction, HB_DIRECTION_LTR, HB_DIRECTION_RTL, sizeof(hb_feature_t), feature_count);
+     // if (feature_count > 0) {
+     //    printf("%d (%d) %d %x..%x\n", features[0].tag, hb_tag_from_string("liga", -1), features[0].value, features[0].start, features[0].end);
+     // }
+
      jboolean ret;
      unsigned int buflen;
 
@@ -306,7 +313,6 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
      hb_buffer_destroy (buffer);
      hb_font_destroy(hbfont);
      free((void*)jdkFontInfo);
-     if (features != NULL) free(features);
      (*env)->ReleaseCharArrayElements(env, text, chars, JNI_ABORT);
      return ret;
 }
