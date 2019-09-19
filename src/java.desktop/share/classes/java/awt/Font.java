@@ -782,7 +782,16 @@ public class Font implements java.io.Serializable
         if (values.getPosture() >= .2f) this.style |= ITALIC; // not  == .2f
 
         this.nonIdentityTx = values.anyNonDefault(EXTRA_MASK);
-        this.hasLayoutAttributes = values.anyNonDefault(LAYOUT_MASK) || !features.isEmpty() || !variations.isEmpty();
+        
+        boolean hasLayoutAttributes = values.anyNonDefault(LAYOUT_MASK);
+        if (!hasLayoutAttributes)
+            for (FontFeature feature: features.values())
+                if (feature.value != 0) {
+                    hasLayoutAttributes = true;
+                    break;
+                }
+        hasLayoutAttributes |= !variations.isEmpty();
+        this.hasLayoutAttributes = hasLayoutAttributes;        
     }
 
     /**
