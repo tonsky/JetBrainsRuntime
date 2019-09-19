@@ -389,12 +389,12 @@ public final class GlyphLayout {
             AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
             if (values.getKerning() != 0) {
                 _features = new HashMap<>(_features);
-                FontFeature f = FontFeature.fromString("kern");
+                FontFeature f = FontFeature.fromString("kern", 1);
                 _features.put(f.tag, f);
             }
             if (values.getLigatures() != 0) {
                 _features = new HashMap<>(_features);
-                FontFeature f = FontFeature.fromString("liga");
+                FontFeature f = FontFeature.fromString("liga", 1);
                 _features.put(f.tag, f);
             }
         }

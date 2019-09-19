@@ -14,8 +14,8 @@ public final class FontFeature {
         this.value = value;
     }
 
-    public static FontFeature fromString(String tag) {
-        return new FontFeature(tagFromString(tag), 1);
+    public static FontFeature fromString(String tag, int value) {
+        return new FontFeature(tagFromString(tag), value);
     }
 
     private static final ByteBuffer EMPTY = ByteBuffer.allocateDirect(0);
