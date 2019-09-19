@@ -261,9 +261,17 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
      int feature_count = (*env)->GetDirectBufferCapacity(env, bb_features) / sizeof(hb_feature_t);
      hb_feature_t *features = (hb_feature_t *) (*env)->GetDirectBufferAddress(env, bb_features);
 
-     // printf("direction: %d (%d %d), sizeof: %lu, feature_count: %d\n", direction, HB_DIRECTION_LTR, HB_DIRECTION_RTL, sizeof(hb_feature_t), feature_count);
-     // if (feature_count > 0) {
-     //    printf("%d (%d) %d %x..%x\n", features[0].tag, hb_tag_from_string("liga", -1), features[0].value, features[0].start, features[0].end);
+     int variation_count = (*env)->GetDirectBufferCapacity(env, bb_variations) / sizeof(hb_variation_t);
+     hb_variation_t *variations = (hb_variation_t *) (*env)->GetDirectBufferAddress(env, bb_variations);
+
+     // printf("sizeof: %lu, feature_count: %d\n", sizeof(hb_feature_t), feature_count);
+     // for (int i = 0; i < feature_count; ++i) {
+     //    printf("%d = %d %x..%x\n", features[i].tag, features[i].value, features[i].start, features[i].end);
+     // }
+
+     // printf("sizeof: %lu, variation_count: %d\n", sizeof(hb_variation_t), variation_count);
+     // for (int i = 0; i < variation_count; ++i) {
+     //    printf("%d = %f\n", variations[i].tag, variations[i].value);
      // }
 
      jboolean ret;
@@ -301,6 +309,7 @@ JNIEXPORT jboolean JNICALL Java_sun_font_SunLayoutEngine_shape
 
      hb_buffer_add_utf16(buffer, chars, len, offset, limit-offset);
 
+     hb_font_set_variations(hbfont, variations, variation_count);
      hb_shape_full(hbfont, buffer, features, feature_count, 0);
      glyphCount = hb_buffer_get_length(buffer);
      glyphInfo = hb_buffer_get_glyph_infos(buffer, 0);

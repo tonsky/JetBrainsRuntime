@@ -70,13 +70,17 @@ package sun.font;
 
 import java.lang.ref.SoftReference;
 import java.awt.Font;
+import java.awt.font.FontFeature;
 import java.awt.font.FontRenderContext;
+import java.awt.font.FontVariation;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.Character.*;
@@ -101,8 +105,8 @@ public final class GlyphLayout {
     private int _direction;
     private static final int DIRECTION_LTR = 4;
     private static final int DIRECTION_RTL = 5;
-    private ArrayList<FontFeature> _features;
-    private ArrayList<FontVariation> _variations;
+    private Map<Integer, FontFeature> _features;
+    private Map<Integer, FontVariation> _variations;
     private int _offset;
 
     public static final class LayoutEngineKey {
@@ -376,17 +380,23 @@ public final class GlyphLayout {
 
         boolean handlePairedChars = (flags & Font.LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT) == 0;
 
+        _features = font.getFontFeatures();
+        _variations = font.getFontVariations();
+
         // need to set after init
         // go through the back door for this
         if (font.hasLayoutAttributes()) {
             AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
-            if (values.getKerning() != 0)
-                _features.add(FontFeature.fromString("kern"));
-            if (values.getLigatures() != 0)
-                _features.add(FontFeature.fromString("liga"));
-            _features.add(FontFeature.fromString("zero"));
-            _features.add(FontFeature.fromString("onum"));
-            _features.add(FontFeature.fromString("ss01"));
+            if (values.getKerning() != 0) {
+                _features = new HashMap<>(_features);
+                FontFeature f = FontFeature.fromString("kern");
+                _features.put(f.tag, f);
+            }
+            if (values.getLigatures() != 0) {
+                _features = new HashMap<>(_features);
+                FontFeature f = FontFeature.fromString("liga");
+                _features.put(f.tag, f);
+            }
         }
 
         _offset = offset;
@@ -530,8 +540,6 @@ public final class GlyphLayout {
 
     private void init(int capacity) {
         this._direction = DIRECTION_LTR;
-        this._features = new ArrayList<>();
-        this._variations = new ArrayList<>();
         this._ercount = 0;
         this._gvdata.init(capacity);
     }
@@ -697,8 +705,8 @@ public final class GlyphLayout {
             _textRecord.limit = limit;
             engine.layout(_sd, _mat, ptSize, gmask, start - _offset, _textRecord,
                           _direction,
-                          FontFeature.toDirectByteBuffer(_features),
-                          FontVariation.toDirectByteBuffer(_variations),
+                          FontFeature.toDirectByteBuffer(_features.values()),
+                          FontVariation.toDirectByteBuffer(_variations.values()),
                           _pt, _gvdata);
         }
     }

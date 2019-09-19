@@ -25,7 +25,9 @@
 
 package java.awt;
 
+import java.awt.font.FontFeature;
 import java.awt.font.FontRenderContext;
+import java.awt.font.FontVariation;
 import java.awt.font.GlyphVector;
 import java.awt.font.LineMetrics;
 import java.awt.font.TextAttribute;
@@ -41,7 +43,9 @@ import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.text.CharacterIterator;
+import java.util.Collections;
 import java.util.EventListener;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
@@ -422,6 +426,8 @@ public class Font implements java.io.Serializable
 
     private transient AttributeValues values;
     private transient boolean hasLayoutAttributes;
+    private transient Map<Integer, FontFeature> features = Collections.EMPTY_MAP;
+    private transient Map<Integer, FontVariation> variations = Collections.EMPTY_MAP;
 
     /*
      * If the origin of a Font is a created font then this attribute
@@ -585,6 +591,8 @@ public class Font implements java.io.Serializable
 
     /* This constructor is used by deriveFont when attributes is null */
     private Font(String name, int style, float sizePts,
+                 Map<Integer, FontFeature> features,
+                 Map<Integer, FontVariation> variations,
                  boolean created, Font2DHandle handle) {
         this(name, style, sizePts);
         this.createdFont = created;
@@ -606,6 +614,8 @@ public class Font implements java.io.Serializable
                 this.font2DHandle = handle;
             }
         }
+        this.features = features;
+        this.variations = variations;
     }
 
     /* used to implement Font.createFont */
@@ -650,6 +660,8 @@ public class Font implements java.io.Serializable
      * In these cases there is no need to interrogate "values".
      */
     private Font(AttributeValues values, String oldName, int oldStyle,
+                 Map<Integer, FontFeature> features,
+                 Map<Integer, FontVariation> variations,
                  boolean created, Font2DHandle handle) {
 
         this.createdFont = created;
@@ -680,6 +692,8 @@ public class Font implements java.io.Serializable
                 this.font2DHandle = null;
             }
         }
+        this.features = features;
+        this.variations = variations;
         initFromValues(values);
     }
 
@@ -768,7 +782,7 @@ public class Font implements java.io.Serializable
         if (values.getPosture() >= .2f) this.style |= ITALIC; // not  == .2f
 
         this.nonIdentityTx = values.anyNonDefault(EXTRA_MASK);
-        this.hasLayoutAttributes =  values.anyNonDefault(LAYOUT_MASK);
+        this.hasLayoutAttributes = values.anyNonDefault(LAYOUT_MASK) || !features.isEmpty() || !variations.isEmpty();
     }
 
     /**
@@ -848,6 +862,7 @@ public class Font implements java.io.Serializable
                 values = font.getAttributeValues().clone();
                 values.merge(attributes, SECONDARY_MASK);
                 return new Font(values, font.name, font.style,
+                                font.features, font.variations,
                                 font.createdFont, font.font2DHandle);
             }
             return new Font(attributes);
@@ -859,6 +874,7 @@ public class Font implements java.io.Serializable
                 AttributeValues values = font.getAttributeValues().clone();
                 values.merge(attributes, SECONDARY_MASK);
                 return new Font(values, font.name, font.style,
+                                font.features, font.variations,
                                 font.createdFont, font.font2DHandle);
             }
 
@@ -1945,7 +1961,7 @@ public class Font implements java.io.Serializable
             }
             values = getAttributeValues().merge(extras);
             this.nonIdentityTx = values.anyNonDefault(EXTRA_MASK);
-            this.hasLayoutAttributes =  values.anyNonDefault(LAYOUT_MASK);
+            this.hasLayoutAttributes = values.anyNonDefault(LAYOUT_MASK);
 
             fRequestedAttributes = null; // don't need it any more
         }
@@ -2002,6 +2018,14 @@ public class Font implements java.io.Serializable
         return new AttributeMap(getAttributeValues());
     }
 
+    public Map<Integer, FontFeature> getFontFeatures() {
+        return features;
+    }
+
+    public Map<Integer, FontVariation> getFontVariations() {
+        return variations;
+    }
+
     /**
      * Returns the keys of all the attributes supported by this
      * {@code Font}.  These attributes can be used to derive other
@@ -2051,13 +2075,13 @@ public class Font implements java.io.Serializable
      */
     public Font deriveFont(int style, float size){
         if (values == null) {
-            return new Font(name, style, size, createdFont, font2DHandle);
+            return new Font(name, style, size, features, variations, createdFont, font2DHandle);
         }
         AttributeValues newValues = getAttributeValues().clone();
         int oldStyle = (this.style != style) ? this.style : -1;
         applyStyle(style, newValues);
         newValues.setSize(size);
-        return new Font(newValues, null, oldStyle, createdFont, font2DHandle);
+        return new Font(newValues, null, oldStyle, features, variations, createdFont, font2DHandle);
     }
 
     /**
@@ -2076,7 +2100,7 @@ public class Font implements java.io.Serializable
         int oldStyle = (this.style != style) ? this.style : -1;
         applyStyle(style, newValues);
         applyTransform(trans, newValues);
-        return new Font(newValues, null, oldStyle, createdFont, font2DHandle);
+        return new Font(newValues, null, oldStyle, features, variations, createdFont, font2DHandle);
     }
 
     /**
@@ -2088,11 +2112,11 @@ public class Font implements java.io.Serializable
      */
     public Font deriveFont(float size){
         if (values == null) {
-            return new Font(name, style, size, createdFont, font2DHandle);
+            return new Font(name, style, size, features, variations, createdFont, font2DHandle);
         }
         AttributeValues newValues = getAttributeValues().clone();
         newValues.setSize(size);
-        return new Font(newValues, null, -1, createdFont, font2DHandle);
+        return new Font(newValues, null, -1, features, variations, createdFont, font2DHandle);
     }
 
     /**
@@ -2108,7 +2132,7 @@ public class Font implements java.io.Serializable
     public Font deriveFont(AffineTransform trans){
         AttributeValues newValues = getAttributeValues().clone();
         applyTransform(trans, newValues);
-        return new Font(newValues, null, -1, createdFont, font2DHandle);
+        return new Font(newValues, null, -1, features, variations, createdFont, font2DHandle);
     }
 
     /**
@@ -2120,12 +2144,12 @@ public class Font implements java.io.Serializable
      */
     public Font deriveFont(int style){
         if (values == null) {
-           return new Font(name, style, size, createdFont, font2DHandle);
+           return new Font(name, style, size, features, variations, createdFont, font2DHandle);
         }
         AttributeValues newValues = getAttributeValues().clone();
         int oldStyle = (this.style != style) ? this.style : -1;
         applyStyle(style, newValues);
-        return new Font(newValues, null, oldStyle, createdFont, font2DHandle);
+        return new Font(newValues, null, oldStyle, features, variations, createdFont, font2DHandle);
     }
 
     /**
@@ -2145,7 +2169,21 @@ public class Font implements java.io.Serializable
         AttributeValues newValues = getAttributeValues().clone();
         newValues.merge(attributes, RECOGNIZED_MASK);
 
-        return new Font(newValues, name, style, createdFont, font2DHandle);
+        return new Font(newValues, name, style, features, variations, createdFont, font2DHandle);
+    }
+
+    public Font deriveFont(FontFeature feature) {
+        AttributeValues newValues = getAttributeValues().clone();
+        HashMap<Integer, FontFeature> newFeatures = new HashMap<Integer, FontFeature>(features);
+        newFeatures.put(feature.tag, feature);
+        return new Font(newValues, name, style, Collections.unmodifiableMap(newFeatures), variations, createdFont, font2DHandle);
+    }
+
+    public Font deriveFont(FontVariation variation) {
+        AttributeValues newValues = getAttributeValues().clone();
+        HashMap<Integer, FontVariation> newVariations = new HashMap<Integer, FontVariation>(variations);
+        newVariations.put(variation.tag, variation);
+        return new Font(newValues, name, style, features, Collections.unmodifiableMap(newVariations), createdFont, font2DHandle);
     }
 
     /**
