@@ -71,21 +71,25 @@
                        style:(int)style
 {
 
+    NSLog(@"fontName: %@", name);
+
     // NSString *sampleName = @"FireCode_Regular-regular;2003265652=158.0";
+    NSMutableArray *variations = [NSMutableArray new];
     NSArray *components = [name componentsSeparatedByString:@";"];
     NSString *fontName = [components objectAtIndex:0];
-    NSString *fontVariations = [components objectAtIndex:1]; // how array out of bounds is handled in objc?
-    NSArray *variationComponents = [fontVariations componentsSeparatedByString:@","];
+    if ([components count] > 1) {
+      NSString *fontVariations = [components objectAtIndex:1]; // how array out of bounds is handled in objc?
+      NSArray *variationComponents = [fontVariations componentsSeparatedByString:@","];
 
-    NSMutableArray *variations = [NSMutableArray new];
-    for (NSString *variation in variationComponents) {
-      NSArray *data = [variation componentsSeparatedByString:@"="];
-      int key = [[data objectAtIndex:0] intValue];
-      float val = [[data objectAtIndex:1] floatValue];
-      NSNumber *keynum = [NSNumber numberWithInteger:key];
-      NSNumber *valnum = [NSNumber numberWithFloat:val];
-      NSArray *pair = [NSArray arrayWithObjects: keynum, valnum, nil];
-      [variations addObject:pair];
+      for (NSString *variation in variationComponents) {
+        NSArray *data = [variation componentsSeparatedByString:@"="];
+        int key = [[data objectAtIndex:0] intValue];
+        float val = [[data objectAtIndex:1] floatValue];
+        NSNumber *keynum = [NSNumber numberWithInteger:key];
+        NSNumber *valnum = [NSNumber numberWithFloat:val];
+        NSArray *pair = [NSArray arrayWithObjects: keynum, valnum, nil];
+        [variations addObject:pair];
+      }
     }
 
     // NSLog(@"fontName: %@", fontName);
