@@ -70,6 +70,39 @@
 + (AWTFont *) awtFontForName:(NSString *)name
                        style:(int)style
 {
+    // sample
+    NSLog(@"Hej: %@", name);
+
+    NSString *sampleName = @"FireCode_Regular-regular;wdth=800,wght=300";
+    NSArray *components = [sampleName componentsSeparatedByString:@";"];
+    NSString *fontName = [components objectAtIndex:0];
+    NSString *fontVariations = [components objectAtIndex:1]; // how array out of bounds is handled in objc?
+    NSArray *variationComponents = [fontVariations componentsSeparatedByString:@","];
+
+    NSMutableArray *variations = [NSMutableArray new];
+    for (NSString *variation in variationComponents) {
+      NSArray *data = [variation componentsSeparatedByString:@"="];
+      NSString *key = [data objectAtIndex:0];
+      NSString *sval = [data objectAtIndex:1];
+      float val = [sval floatValue];
+      NSNumber *num = [NSNumber numberWithFloat:val];
+      NSArray *pair = [NSArray arrayWithObjects: key, num, nil];
+      [variations addObject:pair];
+    }
+
+    NSLog(@"fontName: %@", fontName);
+    NSLog(@"fontVariations: %@", fontVariations);
+    NSLog(@"Variations parsed: %@", variations);
+
+    for (NSArray *var in variations) {
+      NSString *varName = [var objectAtIndex:0];
+      NSNumber *varVal = [var objectAtIndex:1];
+      NSLog(@"fontVariationName: %@", varName);
+      NSLog(@"fontVariationValue: %@", varVal);
+    }
+
+    // sample-done
+
     // create font with family & size
     NSFont *nsFont = [NSFont fontWithName:name size:1.0];
 
@@ -1205,7 +1238,7 @@ static NSDictionary* prebuiltFamilyNames() {
              @"Wingdings3" : @"Wingdings 3",
              @"ZapfDingbatsITC" : @"Zapf Dingbats",
              @"Zapfino" : @"Zapfino",
-             
+
              // JetBrains fonts
              @"DroidSans" : @"Droid Sans",
              @"DroidSans-Bold" : @"Droid Sans",
