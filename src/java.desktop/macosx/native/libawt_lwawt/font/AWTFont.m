@@ -70,11 +70,9 @@
 + (AWTFont *) awtFontForName:(NSString *)name
                        style:(int)style
 {
-    // sample
-    NSLog(@"Hej: %@", name);
 
-    NSString *sampleName = @"FireCode_Regular-regular;wdth=800,wght=300";
-    NSArray *components = [sampleName componentsSeparatedByString:@";"];
+    // NSString *sampleName = @"FireCode_Regular-regular;2003265652=158.0";
+    NSArray *components = [name componentsSeparatedByString:@";"];
     NSString *fontName = [components objectAtIndex:0];
     NSString *fontVariations = [components objectAtIndex:1]; // how array out of bounds is handled in objc?
     NSArray *variationComponents = [fontVariations componentsSeparatedByString:@","];
@@ -82,29 +80,37 @@
     NSMutableArray *variations = [NSMutableArray new];
     for (NSString *variation in variationComponents) {
       NSArray *data = [variation componentsSeparatedByString:@"="];
-      NSString *key = [data objectAtIndex:0];
-      NSString *sval = [data objectAtIndex:1];
-      float val = [sval floatValue];
-      NSNumber *num = [NSNumber numberWithFloat:val];
-      NSArray *pair = [NSArray arrayWithObjects: key, num, nil];
+      int key = [[data objectAtIndex:0] intValue];
+      float val = [[data objectAtIndex:1] floatValue];
+      NSNumber *keynum = [NSNumber numberWithInteger:key];
+      NSNumber *valnum = [NSNumber numberWithFloat:val];
+      NSArray *pair = [NSArray arrayWithObjects: keynum, valnum, nil];
       [variations addObject:pair];
     }
 
-    NSLog(@"fontName: %@", fontName);
-    NSLog(@"fontVariations: %@", fontVariations);
-    NSLog(@"Variations parsed: %@", variations);
-
-    for (NSArray *var in variations) {
-      NSString *varName = [var objectAtIndex:0];
-      NSNumber *varVal = [var objectAtIndex:1];
-      NSLog(@"fontVariationName: %@", varName);
-      NSLog(@"fontVariationValue: %@", varVal);
-    }
-
-    // sample-done
+    // NSLog(@"fontName: %@", fontName);
+    // NSLog(@"fontVariations: %@", fontVariations);
+    // NSLog(@"Variations parsed: %@", variations);
 
     // create font with family & size
-    NSFont *nsFont = [NSFont fontWithName:name size:1.0];
+    NSMutableDictionary *attrs = [NSMutableDictionary new];
+    // [attrs setObject: [NSNumber numberWithFloat:600.0] forKey: @(0x77676874)];
+    // [attrs setObject: [NSNumber numberWithFloat:158.0] forKey: @(2003265652)];
+    // [attrs setObject: [NSNumber numberWithFloat:700.0] forKey: [NSNumber numberWithInteger:2003265652]];
+    // [attrs setObject: [NSNumber numberWithFloat:600.0] forKey: @"wght"];
+
+    for (NSArray *var in variations) {
+      NSString *tag = [var objectAtIndex:0];
+      NSNumber *val = [var objectAtIndex:1];
+      NSLog(@"fontVariationName: %@", tag);
+      NSLog(@"fontVariationValue: %@", val);
+      [attrs setObject: val forKey: @([tag intValue])];
+    }
+
+    NSFontDescriptor *desc = [NSFontDescriptor fontDescriptorWithFontAttributes:@{NSFontNameAttribute:      name,
+                                                                                  NSFontVariationAttribute: attrs}];
+    // NSFont *nsFont = [NSFont fontWithName:name size:1.0];
+    NSFont *nsFont = [NSFont fontWithDescriptor:desc size:1.0];
 
     if (nsFont == nil) {
         // if can't get font of that name, substitute system default font
